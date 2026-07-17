@@ -1,0 +1,8 @@
+- [x] Create `requirements.txt`
+- [x] Create `Dockerfile`
+- [x] Create `app.py`
+- [x] Create `static/index.html`
+- [x] Create `static/style.css`
+- [x] Create `static/app.js`
+- [x] Modify `.ai_rules.md` to update the project map
+- [x] Verify locally

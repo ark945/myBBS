@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myBBS - PTT High-Speed Springboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- xterm.css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background animations -->
+    <div class="bg-gradient-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation / Controls -->
+        <aside class="sidebar-panel">
+            <div class="brand-header">
+                <i class="fa-solid fa-terminal brand-icon"></i>
+                <div>
+                    <h1>myBBS</h1>
+                    <p class="subtitle">PTT 專屬加密跳板</p>
+                </div>
+            </div>
+
+            <!-- Connection Status Card -->
+            <div class="status-card">
+                <div class="status-header">
+                    <span class="status-label">連線狀態</span>
+                    <div id="status-indicator" class="status-dot disconnected"></div>
+                </div>
+                <div id="status-text" class="status-text-val">未連線</div>
+                <div class="status-action-group">
+                    <button id="btn-toggle-conn" class="btn btn-connect">
+                        <i class="fa-solid fa-play"></i> <span>連線到 PTT</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Security Passcode Card (Hidden conditionally) -->
+            <div id="passcode-card" class="control-card hidden">
+                <h3><i class="fa-solid fa-lock"></i> 安全存取驗證</h3>
+                <div class="input-group">
+                    <input type="password" id="txt-passcode" placeholder="請輸入訪問密碼..." />
+                    <button id="btn-toggle-passcode-view" class="btn-icon">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="chk-save-passcode" checked />
+                        記住密碼
+                    </label>
+                </div>
+            </div>
+
+            <!-- Customizations Card -->
+            <div class="control-card">
+                <h3><i class="fa-solid fa-sliders"></i> 顯示與設定</h3>
+                
+                <!-- Font size slider -->
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>字型大小 (Font Size)</span>
+                        <span id="lbl-font-size">16px</span>
+                    </div>
+                    <input type="range" id="rng-font-size" min="12" max="24" value="16" step="1" />
+                </div>
+
+                <!-- Theme selector -->
+                <div class="select-group">
+                    <label for="sel-theme">終端主題 (Theme)</label>
+                    <select id="sel-theme">
+                        <option value="matrix" selected>Matrix (綠色矩陣)</option>
+                        <option value="amber">Amber Retro (復古琥珀)</option>
+                        <option value="cyber">Cyberpunk (霓虹駭客)</option>
+                        <option value="dracula">Dracula (經典吸血鬼)</option>
+                        <option value="classic">Classic Dark (標準灰階)</option>
+                        <option value="monochrome">Monochrome (無色彩白色)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Paste Helper Card -->
+            <div class="control-card">
+                <h3><i class="fa-solid fa-paste"></i> 貼上小幫手</h3>
+                <p class="card-desc">BBS 系統防灌水機制會擋快速貼上。使用此工具可安全送出文章。</p>
+                <button id="btn-open-paste" class="btn btn-secondary">
+                    <i class="fa-solid fa-keyboard"></i> <span>貼上長文章</span>
+                </button>
+            </div>
+
+            <!-- Quick Instructions -->
+            <div class="control-card instruction-card">
+                <h3><i class="fa-solid fa-circle-question"></i> PTT 常用操作</h3>
+                <ul class="inst-list">
+                    <li><kbd>←</kbd> 或 <kbd>h</kbd>：回上一頁</li>
+                    <li><kbd>→</kbd> 或 <kbd>l</kbd>：進入看板/文章</li>
+                    <li><kbd>↑</kbd> <kbd>↓</kbd> 或 <kbd>j</kbd> <kbd>k</kbd>：移動游標</li>
+                    <li><kbd>PageUp</kbd> <kbd>PageDown</kbd>：翻頁</li>
+                    <li><kbd>Enter</kbd>：確認選取</li>
+                    <li><kbd>Ctrl + U</kbd>：重新整理畫面</li>
+                </ul>
+            </div>
+            
+            <footer class="footer-info">
+                <p>Designed with ❤ by Antigravity</p>
+            </footer>
+        </aside>
+
+        <!-- Main Display / Terminal Area -->
+        <main class="main-terminal-area">
+            <div class="terminal-container">
+                <div class="terminal-chrome-header">
+                    <div class="chrome-dots">
+                        <span class="dot dot-red"></span>
+                        <span class="dot dot-yellow"></span>
+                        <span class="dot dot-green"></span>
+                    </div>
+                    <div class="chrome-title">PTT Terminal Client</div>
+                    <div class="chrome-actions">
+                        <button id="btn-fullscreen" title="全螢幕模式">
+                            <i class="fa-solid fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- XTerm Element -->
+                <div id="terminal" class="terminal-body"></div>
+            </div>
+
+            <!-- Virtual BBS Keypad Overlay (helpful for mobile or quick clicks) -->
+            <div class="virtual-keypad">
+                <button class="key-btn" data-key="ArrowUp"><i class="fa-solid fa-arrow-up"></i></button>
+                <button class="key-btn" data-key="ArrowDown"><i class="fa-solid fa-arrow-down"></i></button>
+                <button class="key-btn" data-key="ArrowLeft"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="key-btn" data-key="ArrowRight"><i class="fa-solid fa-arrow-right"></i></button>
+                <button class="key-btn btn-wide" data-key="Enter">ENTER</button>
+                <button class="key-btn btn-wide" data-key="Escape">ESC</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Paste Helper Modal -->
+    <div id="paste-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-paste text-glow"></i> 長文章安全貼上小幫手</h2>
+                <button id="btn-close-paste" class="btn-icon-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">
+                    在此貼入您要發布的內容。我們將以每 50 毫秒 20 個字元的速度發送給 PTT，以繞過防洪限速。
+                </p>
+                <textarea id="paste-text-area" placeholder="請在此貼上文章內容..."></textarea>
+                
+                <div class="progress-bar-container hidden" id="paste-progress-container">
+                    <div class="progress-bar" id="paste-progress"></div>
+                    <span id="paste-progress-text">準備傳送...</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-cancel-paste" class="btn btn-outline">取消</button>
+                <button id="btn-submit-paste" class="btn btn-primary">
+                    <i class="fa-solid fa-paper-plane"></i> 安全貼上
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- xterm.js Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+    
+    <!-- Frontend JS logic -->
+    <script src="app.js"></script>
+</body>
+</html>
