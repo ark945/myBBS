@@ -24,6 +24,38 @@ except LookupError:
         return None
     codecs.register(big5_uao_codec_search)
 
+class Big5UAOIncrementalDecoder:
+    """
+    A custom incremental decoder wrapper for big5-uao.
+    Since the uao package does not implement the incrementaldecoder interface,
+    this class buffers split double-byte characters manually.
+    """
+    def __init__(self):
+        self.buffer = bytearray()
+
+    def decode(self, new_bytes: bytes) -> str:
+        self.buffer.extend(new_bytes)
+        n = len(self.buffer)
+        if n == 0:
+            return ""
+            
+        i = 0
+        while i < n:
+            b = self.buffer[i]
+            if 0x81 <= b <= 0xfe:
+                i += 2
+            else:
+                i += 1
+                
+        if i == n:
+            valid_bytes = self.buffer
+            self.buffer = bytearray()
+        else:
+            valid_bytes = self.buffer[:-1]
+            self.buffer = bytearray([self.buffer[-1]])
+            
+        return valid_bytes.decode('big5-uao', errors='replace')
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("myBBS-Proxy")
@@ -80,8 +112,8 @@ async def websocket_endpoint(websocket: WebSocket, passcode: str = ""):
             await websocket.send_text("\x1b[1;32m[System] 連線成功！正在進入 BBS...\x1b[0m\r\n\r\n")
 
             # Decoders/Encoders for incremental translation of Big5 (big5-uao) stream
-            # IncrementalDecoder helps with split bytes across network packets
-            decoder = codecs.getincrementaldecoder('big5-uao')(errors='replace')
+            # Since big5-uao has no built-in codecs incrementaldecoder, we use our custom implementation
+            decoder = Big5UAOIncrementalDecoder()
 
             # Task for forwarding messages from PTT to Client
             async def ptt_to_client():
