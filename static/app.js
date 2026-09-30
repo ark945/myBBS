@@ -209,16 +209,59 @@ async function initApp() {
         cols: 80,
         rows: 24,
         cursorBlink: true,
-        fontFamily: "'Courier New', 'MingLiU', 'PMingLiU', 'Microsoft JhengHei', monospace",
+        allowProposedApi: true,
+        fontFamily: "'JetBrains Mono', 'MingLiU', 'PMingLiU', monospace",
         fontSize: parseInt(document.getElementById('rng-font-size').value),
         letterSpacing: 0,
-        lineHeight: 1.25,
-        convertEol: true,
+        lineHeight: 1.0,
         scrollback: 1000
     });
 
     fitAddon = new FitAddon.FitAddon();
     term.loadAddon(fitAddon);
+    
+    // BBS/Big5-compatible character width provider
+    // In Big5, all characters above 0x7F are double-byte and occupy 2 columns.
+    // Standard Unicode treats block elements, box drawing, etc. as single-width,
+    // which breaks BBS ASCII art alignment. This provider fixes that.
+    term.unicode.register({
+        version: 'bbs',
+        wcwidth: function(cp) {
+            if (cp === 0) return 0;
+            if (cp < 0x20) return 0;
+            if (cp < 0x7F) return 1;
+            if (cp < 0xA0) return 0;
+            // Combining marks (zero width)
+            if ((cp >= 0x0300 && cp <= 0x036F) ||
+                (cp >= 0x1AB0 && cp <= 0x1AFF) ||
+                (cp >= 0x1DC0 && cp <= 0x1DFF) ||
+                (cp >= 0x20D0 && cp <= 0x20FF) ||
+                (cp >= 0xFE00 && cp <= 0xFE0F) ||
+                (cp >= 0xFE20 && cp <= 0xFE2F) ||
+                cp === 0x200B || cp === 0x200C ||
+                cp === 0x200D || cp === 0xFEFF) {
+                return 0;
+            }
+            // PTT 80 欄排版中，方塊/區塊/幾何字形各佔 1 欄（與 UAO 對照表一致）
+            if ((cp >= 0x2500 && cp <= 0x25FF) ||
+                (cp >= 0x2600 && cp <= 0x26FF)) {
+                return 1;
+            }
+            // CJK / 全形字元：Big5 雙字節，佔 2 欄
+            if ((cp >= 0x1100 && cp <= 0x115F) ||
+                (cp >= 0x2E80 && cp <= 0xA4CF && cp !== 0x303F) ||
+                (cp >= 0xAC00 && cp <= 0xD7A3) ||
+                (cp >= 0xF900 && cp <= 0xFAFF) ||
+                (cp >= 0xFE30 && cp <= 0xFE6F) ||
+                (cp >= 0xFF00 && cp <= 0xFF60) ||
+                (cp >= 0xFFE0 && cp <= 0xFFE6)) {
+                return 2;
+            }
+            // 其餘（Latin-1 Supplement 等 Big5 單字節映射：¢ ª ± ° 1 欄）
+            return 1;
+        }
+    });
+    term.unicode.activeVersion = 'bbs';
     
     // Optional web-links support
     const webLinksAddon = new window.WebLinksAddon.WebLinksAddon();

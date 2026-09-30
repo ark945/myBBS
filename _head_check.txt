@@ -1,0 +1,24 @@
+FIRST 400 BYTES REPR:
+b'HTTP/1.1 200 OK\r\n\r\n     \xa3\xbb      \x1b[33;1mPTT\x1b[m                \xa1P   \xa2\xa9        \xa1P  \xa3\xbb      \x1b[1m\xa2\xa8\x1b[47m\xa2i\xa2i\xa2i\xa2i\xa2i\xa2i\x1b[40m\xa2\xab\x1b[m\r\n             \x1b[1m140.112.172.11 \x1b[m\xa1P     \xa2\xa8\x1b[47m\xa2i\x1b[1m\xa2\xaa\x1b[40m\xa2i\xa2\xab\x1b[m            \x1b[1m\xa2\xa8\x1b[47m\xa2i\xa2i\xa2i\xa2i\xa2i\x1b[m\r\n  \xa2z\xa2w\xa2{     \x1b[33;1m\xa7\xe5\xbd\xf0\xbd\xf0\xb9\xea\xb7~\xa7{\x1b[m        \xa2\xa8\x1b[30;47m\xa2d\x1b[37m\xa2i\xa2i\x1b[1m\xa2\xaa\xa2i\x1b[40m\xa2\xab\x1b[m   \xa1P   \x1b[1m\xa2\xa8\x1b[47m\xa2i\xa2i\xa2i\xa2i\xa2i\x1b[40m\xa2\xab  \x1b[m\xa1P\x1b[m\r\n  \xa2x\x1b[1m\xa1V\x1b[m\xa2|\xa2{   \x1b[1mptt.cc       \x1b[m'
+
+HEX:
+0000  48 54 54 50 2f 31 2e 31 20 32 30 30 20 4f 4b 0d
+0010  0a 0d 0a 20 20 20 20 20 a3 bb 20 20 20 20 20 20
+0020  1b 5b 33 33 3b 31 6d 50 54 54 1b 5b 6d 20 20 20
+0030  20 20 20 20 20 20 20 20 20 20 20 20 20 a1 50 20
+0040  20 20 a2 a9 20 20 20 20 20 20 20 20 a1 50 20 20
+0050  a3 bb 20 20 20 20 20 20 1b 5b 31 6d a2 a8 1b 5b
+0060  34 37 6d a2 69 a2 69 a2 69 a2 69 a2 69 a2 69 1b
+0070  5b 34 30 6d a2 ab 1b 5b 6d 0d 0a 20 20 20 20 20
+0080  20 20 20 20 20 20 20 20 1b 5b 31 6d 31 34 30 2e
+0090  31 31 32 2e 31 37 32 2e 31 31 20 1b 5b 6d a1 50
+00a0  20 20 20 20 20 a2 a8 1b 5b 34 37 6d a2 69 1b 5b
+00b0  31 6d a2 aa 1b 5b 34 30 6d a2 69 a2 ab 1b 5b 6d
+00c0  20 20 20 20 20 20 20 20 20 20 20 20 1b 5b 31 6d
+00d0  a2 a8 1b 5b 34 37 6d a2 69 a2 69 a2 69 a2 69 a2
+00e0  69 1b 5b 6d 0d 0a 20 20 a2 7a a2 77 a2 7b 20 20
+00f0  20 20 20 1b 5b 33 33 3b 31 6d a7 e5 bd f0 bd f0
+0100  b9 ea b7 7e a7 7b 1b 5b 6d 20 20 20 20 20 20 20
+0110  20 a2 a8 1b 5b 33 30 3b 34 37 6d a2 64 1b 5b 33
+0120  37 6d a2 69 a2 69 1b 5b 31 6d a2 aa a2 69 1b 5b
+0130  34 30 6d a2 ab 1b 5b 6d 20 20 20 a1 50 20 20 20

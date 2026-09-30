@@ -24,37 +24,112 @@ except LookupError:
         return None
     codecs.register(big5_uao_codec_search)
 
-class Big5UAOIncrementalDecoder:
-    """
-    A custom incremental decoder wrapper for big5-uao.
-    Since the uao package does not implement the incrementaldecoder interface,
-    this class buffers split double-byte characters manually.
-    """
-    def __init__(self):
-        self.buffer = bytearray()
+def strip_http_header(buf: bytes):
+    """剝除串流最開頭的 HTTP 狀態行（只在第一個 frame 出現一次）。
 
-    def decode(self, new_bytes: bytes) -> str:
-        self.buffer.extend(new_bytes)
-        n = len(self.buffer)
-        if n == 0:
-            return ""
-            
-        i = 0
-        while i < n:
-            b = self.buffer[i]
-            if 0x81 <= b <= 0xfe:
+    PTT 閘道第一個 payload 形如 `HTTP/1.1 200 OK` + 空行 + 畫面資料；
+    空行可能是 `\\r\\n\\r\\n`（有协商 1.1 子協定）或 `\\n\\n`。
+    回傳 (剝除後的 bytes, 是否已完成)。
+    """
+    for sep in (b"\r\n\r\n", b"\n\n"):
+        idx = buf.find(sep)
+        if idx != -1:
+            return buf[idx + len(sep):], True
+    return buf, False
+
+
+def strip_iac(buf: bytes):
+    """位元組層 Telnet IAC 過濾（增量安全）。
+
+    回傳 (過濾後的 bytes, 已消耗的索引)：
+      - `FF FB/FC/FD/FE` + 1 option  → 吞 3 bytes
+      - `FF FA` … `FF F0`            → 吞至 SE
+      - `FF FF`                      → 輸出字面 0xFF
+      - 其餘                          → 原樣輸出
+    尾端不完整的序列不消耗，留給下一次 decode()。
+    """
+    out = bytearray()
+    i, n = 0, len(buf)
+    while i < n:
+        b = buf[i]
+        if b == 0xFF:
+            if i + 1 >= n:
+                break                                   # Incomplete: keep tail
+            c = buf[i + 1]
+            if c in (0xFB, 0xFC, 0xFD, 0xFE):            # WILL/WONT/DO/DONT
+                if i + 2 >= n:
+                    break
+                i += 3
+                continue
+            if c == 0xFA:                                # SB … SE
+                end = buf.find(b"\xff\xf0", i + 2)
+                if end == -1:
+                    break
+                i = end + 2
+                continue
+            if c == 0xFF:                                # escaped literal 0xFF
+                out.append(0xFF)
+                i += 2
+                continue
+            i += 2
+            continue
+        out.append(b)
+        i += 1
+    return bytes(out), i
+
+
+def _complete_pair_len(data: bytes) -> int:
+    """回傳「雙字節成對完整」的消耗長度；尾端孤 lead byte 不计入（留待下次）。"""
+    i, n = 0, len(data)
+    while i < n:
+        b = data[i]
+        if 0x81 <= b <= 0xFE:
+            if i + 1 < n:
                 i += 2
             else:
-                i += 1
-                
-        if i == n:
-            valid_bytes = self.buffer
-            self.buffer = bytearray()
+                break                                   # 孤 lead byte，待下一次
         else:
-            valid_bytes = self.buffer[:-1]
-            self.buffer = bytearray([self.buffer[-1]])
-            
-        return valid_bytes.decode('big5-uao', errors='replace')
+            i += 1
+    return i
+
+
+class Big5UAOIncrementalDecoder:
+    """big5-uao 增量解碼器：HTTP 標頭剝除 → IAC 過濾 → 雙字節對齊解碼。
+
+    `uao` 未提供 IncrementalDecoder，因此以單一 `_pending` 保留兩段待補字節：
+      1. 不完整的 IAC 序列（`strip_iac` 未消耗的尾端）。
+      2. 不完整的雙字節 lead byte（0x81–0xFE）。
+    `_header_done` 確保 `HTTP/1.1 200 OK` 狀態行只在第一個 frame 剝除一次。
+    """
+
+    def __init__(self):
+        self._pending = bytearray()
+        self._header_done = False
+
+    def decode(self, new_bytes: bytes) -> str:
+        buf = bytes(self._pending) + bytes(new_bytes)
+        self._pending = bytearray()
+
+        # 1) HTTP 狀態行只可能出现一次（串流最開頭）
+        if not self._header_done:
+            buf, self._header_done = strip_http_header(buf)
+            if not self._header_done:
+                self._pending = bytearray(buf)           # 標頭尚未收全
+                return ""
+
+        # 2) 位元組層過濾 IAC，未收完的尾端留待下次
+        filt, used = strip_iac(buf)
+        tail = bytearray(buf[used:])
+
+        # 3) 雙字節對齊：孤 lead byte 留待下次
+        data = filt
+        consumed = _complete_pair_len(data)
+        self._pending = tail + bytearray(data[consumed:])
+
+        ready = data[:consumed]
+        if not ready:
+            return ""
+        return ready.decode("big5-uao", errors="replace")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -64,6 +139,16 @@ app = FastAPI(title="myBBS Proxy")
 
 # Config: passcode required to use the proxy (prevents abuse)
 PROXY_PASSCODE = os.getenv("PROXY_PASSCODE", "")
+
+# Target BBS instance: "ptt" (official ptt.cc, default) or "ptt2" (批踢踢兔, independent community - NOT a mirror of ptt.cc data)
+PTT_TARGETS = {
+    "ptt": ("wss://ws.ptt.cc/bbs", "https://term.ptt.cc"),
+    "ptt2": ("wss://ws.ptt2.cc/bbs", "https://term.ptt2.cc"),
+}
+PTT_TARGET = os.getenv("PTT_TARGET", "ptt").lower()
+if PTT_TARGET not in PTT_TARGETS:
+    logger.warning(f"Unknown PTT_TARGET '{PTT_TARGET}', falling back to 'ptt'.")
+    PTT_TARGET = "ptt"
 
 # Verify passcode helper
 def verify_passcode(passcode: str) -> bool:
@@ -94,18 +179,19 @@ async def websocket_endpoint(websocket: WebSocket, passcode: str = ""):
     logger.info("Client connected and authorized. Connecting to PTT...")
     await websocket.send_text("\x1b[1;36m[System] 正在透過跳板建立與 PTT 的連線...\x1b[0m\r\n")
 
-    ptt_url = "wss://ws.ptt.cc/bbs"
+    ptt_url, ptt_origin = PTT_TARGETS[PTT_TARGET]
     headers = {
-        "Origin": "https://term.ptt.cc",
+        "Origin": ptt_origin,
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
     try:
         # Connect to PTT WebSocket server (support both older and v14.0+ websockets versions)
+        # 必要：Origin 標頭 + 1.1 子協定（缺 Origin 會被閘道回 403）
         try:
-            ptt_conn = websockets.connect(ptt_url, additional_headers=headers)
+            ptt_conn = websockets.connect(ptt_url, subprotocols=["1.1"], additional_headers=headers)
         except TypeError:
-            ptt_conn = websockets.connect(ptt_url, extra_headers=headers)
+            ptt_conn = websockets.connect(ptt_url, subprotocols=["1.1"], extra_headers=headers)
 
         async with ptt_conn as ptt_ws:
             logger.info("Successfully connected to PTT.")

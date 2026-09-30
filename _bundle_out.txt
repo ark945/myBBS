@@ -1,0 +1,15 @@
+== 'UAO init listener' @ 44224
+1]=n&255}}return e}}),window.lib.u2bArray||Object.defineProperty(window.lib,"u2bArray",{configurable:!0,enumerable:!0,get(){if(!t){t=new Uint8Array(131072);for(let e=0;e<65536;e++){let n=_[e]||65533;t[2*e]=n>>8,t[2*e+1]=n&255}}return t}})}y=!0;for(let e of b)try{e()}catch(e){console.error(`Error in UAO init listener:`,e)}}w();var T,E,D,O,k,A,j,ee,M,te,N,ne,re,ie,ae,oe={},se=[],ce=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i,le=Array.isArray;function ue(e,t){for(var n in t)
+
+== '255:' @ 266751
+251:this.state=2;break;case 252:this.state=3;break;case 253:this.state=4;break;case 254:this.state=5;break;case 250:this.state=6,this.iac_sb=[];break;case 241:{let e={cmd:`NOP`,opt:null,detail:{cmd:`NOP`,opt:null}};this.emit(`nop`),this.emit(`telopt`,e),n?.emit?.(`telopt`,e),this.state=0;break}case 255:a.push(new Uint8Array([255])),this.state=0;break;default:this.state=0}break;case 2:{let e={cmd:`WILL`,opt:t,detail:{cmd:`WILL`,opt:t}};switch(this.emit(`telopt`,e),n?.emit?.(`telopt`,e),t){case 0:
+
+== 'getRowText' @ 92653
+s:n,rows:r}}getLastRowNum(e){return!e||typeof e.rows!=`number`?23:this.fixed_last_row!==null&&this.fixed_last_row!==void 0?Math.min(this.fixed_last_row,e.rows-1):e.rows-1}isListScreen(e){return!1}isMenuScreen(e){return!1}isPassScreen(e){if(!e)return!1;let t=this.getLastRowNum(e),n=e?e.cols:80,r=e?e.getRowText(t,0,n):``,i=/(?:隢s*)??s*(?:隞餅??稅蝛箇?稅[([]?Space(?:\/Return)?[)\]]?)\s*蝜潛?/i;if(i.test(r))return!0;if(e&&e.rows>24){let t=e.getRowText(23,0,n);if(i.test(t))return!0}return!1}isWaitingForAnyKe
+
+== 'cols' @ 89682
+x3b\x3d\x3f-\x7e]+)/g,(e,t,n)=>t||`<span class="term-ascii">${n}</span>`)}var B=Object.freeze({NORMAL:0,MENU:1,LIST:2,READING:3,MAPLE_LIST:4,PASS:5,EDITING:6}),Xn=class extends En{constructor(e=`base`,t=Rn.BIG5){super(),this.name=e,this.charset=t,this.fixed_last_row=null,this.max_rows=null,this.max_cols=null,this._loginPromptFired=!1,this._byteBuffer=null,this._textBuffer=``,this.pageState=B.NORMAL,this.prevPageState=B.NORMAL,this.hasWeb=!1,this._editorEscapeChar=`\x1B`,this._editorEscapeFrom=`\
+
+== 'rows' @ 74618
+.(e)}break;case`J`:n.clear(u(0,0));break;case`H`:case`f`:s.length<2?n.gotoPos(0,0):n.gotoPos(l(1,1)-1,l(0,1)-1);break;case`K`:n.eraseLine(u(0,0));break;case`L`:n.insertLine(l(0,1));break;case`M`:n.deleteLine(l(0,1));break;case`P`:n.del(l(0,1));break;case`r`:s.length<2?(n.scrollStart=0,n.scrollEnd=n.rows-1):(n.scrollStart=Math.max(0,l(0,1)-1),n.scrollEnd=Math.max(0,l(1,1)-1));break;case`s`:n.cur_x_sav=n.cur_x,n.cur_y_sav=n.cur_y;break;case`u`:typeof n.cur_x_sav==`number`&&n.cur_x_sav>=0&&typeof n
+

@@ -1,0 +1,3 @@
+b2u 璅∠??: ['b2u_table']
+u2b 璅∠??: ['u2b_table']
+b2u ?賢?: None | u2b ?賢?: None
