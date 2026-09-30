@@ -39,3 +39,11 @@ try_variant("+Origin", subprotocols=["1.1"],
             additional_headers={"Origin": "https://term.ptt.cc"})
 try_variant("Origin only", additional_headers={"Origin": "https://term.ptt.cc"})
 
+
+# --- ptt2（批踢踢兔）驗證：同一套解碼管線 ---
+URL = "wss://ws.ptt2.cc/bbs"
+d = Big5UAOIncrementalDecoder()
+try_variant("ptt2 +Origin", subprotocols=["1.1"],
+            additional_headers={"Origin": "https://term.ptt2.cc"})
+
+
